@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -9,31 +11,17 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: image1.type, data: image1.data } },
-            { inline_data: { mime_type: image2.type, data: image2.data } },
-            { text: prompt },
-          ],
-        }],
-      }),
-    });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    const data = await response.json();
+    const result = await model.generateContent([
+      { inlineData: { mimeType: image1.type, data: image1.data } },
+      { inlineData: { mimeType: image2.type, data: image2.data } },
+      prompt,
+    ]);
 
-    if (data.error) {
-      return res.status(500).json({ error: data.error.message });
-    }
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
+    const text = result.response.text().trim();
     return res.status(200).json({ result: text });
   } catch (err) {
     return res.status(500).json({ error: err.message });
