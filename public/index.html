@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sushi Masato — Daily Sales Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #c8f060;
+    --text: #e8e8e8;
+    --muted: #666;
+    --danger: #ff6b6b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  header h1 {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    letter-spacing: 0.3em;
+    color: var(--text);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  header p {
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--muted);
+  }
+
+  .container {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .upload-zone {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .upload-zone:hover { border-color: var(--accent); }
+  .upload-zone.has-file { border-color: var(--accent); background: rgba(200,240,96,0.05); }
+  .upload-zone input[type=file] { display: none; }
+
+  .upload-zone .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .upload-zone .icon { font-size: 28px; line-height: 1; }
+
+  .upload-zone .status {
+    font-size: 11px;
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .upload-zone img.preview {
+    width: 100%;
+    max-height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    opacity: 0.8;
+  }
+
+  .date-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .date-row label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .date-row input[type=date] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .btn-generate {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #0f0f0f;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    font-weight: 500;
+  }
+
+  .btn-generate:hover { opacity: 0.9; }
+  .btn-generate:active { transform: scale(0.99); }
+  .btn-generate:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 32px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+  }
+
+  .loading.visible { display: block; }
+
+  .dot-anim::after {
+    content: '';
+    animation: dots 1.5s infinite;
+  }
+
+  @keyframes dots {
+    0% { content: ''; }
+    33% { content: '.'; }
+    66% { content: '..'; }
+    100% { content: '...'; }
+  }
+
+  .result-box {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+  }
+
+  .result-box.visible { display: block; }
+
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .result-header span {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .btn-copy {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-copy.copied { color: var(--accent); border-color: var(--accent); }
+
+  .result-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .error-box {
+    display: none;
+    background: rgba(255,107,107,0.08);
+    border: 1px solid rgba(255,107,107,0.3);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 13px;
+    color: var(--danger);
+    line-height: 1.6;
+  }
+
+  .error-box.visible { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sushi Masato</h1>
+  <p>Daily Sales Report</p>
+</header>
+
+<div class="container">
+
+  <div class="date-row">
+    <label>Date</label>
+    <input type="date" id="reportDate">
+  </div>
+
+  <div class="upload-grid">
+    <label class="upload-zone" id="zone1" for="img1">
+      <input type="file" id="img1" accept="image/*" capture="environment">
+      <div class="icon">📊</div>
+      <div class="label">Summary Screen</div>
+      <div class="status" id="status1">Tap to upload</div>
+    </label>
+    <label class="upload-zone" id="zone2" for="img2">
+      <input type="file" id="img2" accept="image/*" capture="environment">
+      <div class="icon">📋</div>
+      <div class="label">Category Detail</div>
+      <div class="status" id="status2">Tap to upload</div>
+    </label>
+  </div>
+
+  <button class="btn-generate" id="btnGenerate" disabled onclick="generate()">
+    Generate Report
+  </button>
+
+  <div class="loading" id="loading">
+    <span class="dot-anim">Analyzing images</span>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="result-box" id="resultBox">
+    <div class="result-header">
+      <span>LINE Report</span>
+      <button class="btn-copy" id="btnCopy" onclick="copyReport()">Copy</button>
+    </div>
+    <div class="result-text" id="resultText"></div>
+  </div>
+
+</div>
+
+<script>
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  document.getElementById('reportDate').value = `${yyyy}-${mm}-${dd}`;
+
+  let img1Data = null, img2Data = null;
+
+  function fileToBase64(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = () => rej(new Error('Read failed'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  function checkReady() {
+    document.getElementById('btnGenerate').disabled = !(img1Data && img2Data);
+  }
+
+  function setupUpload(inputId, zoneId, statusId, imgNum) {
+    document.getElementById(inputId).addEventListener('change', async function() {
+      const file = this.files[0];
+      if (!file) return;
+      const zone = document.getElementById(zoneId);
+      document.getElementById(statusId).textContent = '読み込み中...';
+      try {
+        const b64 = await fileToBase64(file);
+        if (imgNum === 1) img1Data = { data: b64, type: file.type };
+        else img2Data = { data: b64, type: file.type };
+
+        zone.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.className = 'preview';
+        const lbl = document.createElement('div');
+        lbl.className = 'status';
+        lbl.textContent = '✓ Ready';
+        zone.appendChild(img);
+        zone.appendChild(lbl);
+        zone.classList.add('has-file');
+        checkReady();
+      } catch(e) {
+        document.getElementById(statusId).textContent = 'Error';
+      }
+    });
+  }
+
+  setupUpload('img1', 'zone1', 'status1', 1);
+  setupUpload('img2', 'zone2', 'status2', 2);
+
+  function formatDateJP(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+  }
+
+  async function generate() {
+    const dateVal = document.getElementById('reportDate').value;
+    const btn = document.getElementById('btnGenerate');
+    const loading = document.getElementById('loading');
+    const resultBox = document.getElementById('resultBox');
+    const errorBox = document.getElementById('errorBox');
+
+    btn.disabled = true;
+    loading.classList.add('visible');
+    resultBox.classList.remove('visible');
+    errorBox.classList.remove('visible');
+
+    const prompt = `You are reading two POS system screenshots from Sushi Masato Bangkok.
+
+IMAGE 1 = Summary screen. Read these values:
+- "Total Sales" (the large green number)
+- "Sub Total" from the breakdown box on the right
+- "Discount" from the breakdown box
+- "Excluded SVC" = Service Charge
+- "Excluded TAX" = VAT amount (may have decimals)
+
+IMAGE 2 = Category detail table. Read "Gross Sales" for each row:
+- Row "1F Lunch Omakase" → Lunch 1F Omakase amount
+- Row "1F Lunch Beverage" → Lunch 1F Beverage amount
+- Row "1F Omakase" → Dinner 1F Omakase amount
+- Row "1F Beverage" → Dinner 1F Beverage amount
+- Row "3F Omakase" → Dinner 3F Omakase amount
+- Row "3F Beverage" → Dinner 3F Beverage amount
+
+Output ONLY the following, EXACTLY this format, EXACTLY this order:
+
+${formatDateJP(dateVal)}
+
+Total Sales: [Total Sales]
+Subtotal: [Sub Total]
+Discount: [Discount]
+Service Charge: [Excluded SVC]
+Vat(7%): [Excluded TAX]
+
+Dine in: [same as Total Sales]
+Take Away: 0
+Cash: 0
+
+*Lunch
+1F Omakase: [1F Lunch Omakase gross sales]
+1F Beverage: [1F Lunch Beverage gross sales]
+3F Omakase: 0
+3F Beverage: 0
+
+*Dinner
+1F Omakase: [1F Omakase gross sales]
+1F Beverage: [1F Beverage gross sales]
+3F Omakase: [3F Omakase gross sales]
+3F Beverage: [3F Beverage gross sales]
+Takeaway: 0
+
+1F Lunch: 0
+3F Lunch: 0
+1F Dinner: 0
+3F Dinner: 0
+Takeaway: 0
+
+Rules: numbers with commas, no THB, VAT keeps decimals, output ONLY the report.`;
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image1: img1Data, image2: img2Data, prompt }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      document.getElementById('resultText').textContent = data.result;
+      resultBox.classList.add('visible');
+    } catch(e) {
+      errorBox.textContent = 'エラー: ' + e.message;
+      errorBox.classList.add('visible');
+    } finally {
+      loading.classList.remove('visible');
+      btn.disabled = false;
+    }
+  }
+
+  async function copyReport() {
+    const text = document.getElementById('resultText').textContent;
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById('btnCopy');
+    btn.textContent = 'Copied ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  }
+</script>
+</body>
+</html>
