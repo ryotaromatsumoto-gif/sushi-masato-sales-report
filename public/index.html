@@ -299,7 +299,7 @@
 
 <script>
   const today = new Date();
-  const yyyy = today.toLocaleString('en-US', { year: 'numeric', calendar: 'gregory' }).replace(/\D/g, '').slice(0, 4);
+  const yyyy = today.getFullYear();
   const mm = String(today.getMonth()+1).padStart(2,'0');
   const dd = String(today.getDate()).padStart(2,'0');
   document.getElementById('reportDate').value = `${yyyy}-${mm}-${dd}`;
@@ -452,7 +452,7 @@ Rules: numbers with commas, no THB, VAT keeps decimals, output ONLY the report.`
       document.getElementById('resultText').textContent = data.result;
       resultBox.classList.add('visible');
     } catch(e) {
-      errorBox.textContent = 'エラー: ' + e.message;
+      errorBox.textContent = 'エラー: [' + e.constructor.name + '] ' + e.message;
       errorBox.classList.add('visible');
     } finally {
       loading.classList.remove('visible');
