@@ -395,14 +395,20 @@ IMAGE 1 = Summary screen. Read these values:
 - "Discount" from the breakdown box
 - "Excluded SVC" = Service Charge
 - "Excluded TAX" = VAT amount (may have decimals)
+- "Cash" = the number on the same row as "Cash" in the payment breakdown (e.g. 2,943.00 — use 0 if truly 0.00)
+- "Dine in THB" = the THB amount shown below the Dine in bill count in the Bill section
+- "Takeaway THB" = the THB amount shown below the Takeaway bill count in the Bill section (use 0 if absent or 0)
 
 IMAGE 2 = Category detail table. Read "Gross Sales" for each row:
 - Row "1F Lunch Omakase" → Lunch 1F Omakase amount
 - Row "1F Lunch Beverage" → Lunch 1F Beverage amount
+- Row "3F Lunch Omakase" → Lunch 3F Omakase amount (use 0 if row is absent)
+- Row "3F Lunch Beverage" → Lunch 3F Beverage amount (use 0 if row is absent)
 - Row "1F Omakase" → Dinner 1F Omakase amount
 - Row "1F Beverage" → Dinner 1F Beverage amount
 - Row "3F Omakase" → Dinner 3F Omakase amount
 - Row "3F Beverage" → Dinner 3F Beverage amount
+- Row "Takeaway" → Takeaway gross sales amount (use 0 if row is absent)
 
 Output ONLY the following, EXACTLY this format, EXACTLY this order:
 
@@ -414,22 +420,22 @@ Discount: [Discount]
 Service Charge: [Excluded SVC]
 Vat(7%): [Excluded TAX]
 
-Dine in: [same as Total Sales]
-Take Away: 0
-Cash: 0
+Dine in: [Dine in THB]
+Take Away: [Takeaway THB]
+Cash: [Cash]
 
 *Lunch
 1F Omakase: [1F Lunch Omakase gross sales]
 1F Beverage: [1F Lunch Beverage gross sales]
-3F Omakase: 0
-3F Beverage: 0
+3F Omakase: [3F Lunch Omakase gross sales]
+3F Beverage: [3F Lunch Beverage gross sales]
 
 *Dinner
 1F Omakase: [1F Omakase gross sales]
 1F Beverage: [1F Beverage gross sales]
 3F Omakase: [3F Omakase gross sales]
 3F Beverage: [3F Beverage gross sales]
-Takeaway: 0
+Takeaway: [Takeaway gross sales]
 
 1F Lunch: 0
 3F Lunch: 0
